@@ -16,3 +16,6 @@ Kim, J. (2019). A fast and integrative algorithm for clustering performance eval
     in author name disambiguation. Scientometrics, 120(2), 661-681. 
     
 ## How to run files
+1. Download two files: 'main_clustering_metric.py' and 'cluster_evaluation.py'  <br />
+2. Make sure that two files are in the same directory and run 'main_clustering_metric.py' <br />
+3. You can also use sample input files provided in the sample_data folder
