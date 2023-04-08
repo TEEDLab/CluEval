@@ -2,7 +2,7 @@
 Clustering Evaluation (pronounced as 'clue val') for named entity disambiguation  <br />
 This code is to evaluate clustering outputs for named entity disambiguation in Python 3. <br />
 <br />
-Clustering evaluation metrics for named entity disambiguation <br/>
+Clustering evaluation metrics: <br/>
 
 (1) cluster-f: cluster-f precision/recall/f1 <br />
 (2) k-metric: k-metric precision/recall/f1 <br />
