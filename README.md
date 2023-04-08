@@ -1,8 +1,8 @@
 # CluEval
-Clustering Evaluation (pronounced as 'clue val') for Author Name Disambiguation  <br />
-This code is to evaluate input and output clustering for author name disambiguation in Python 3. <br />
+Clustering Evaluation (pronounced as 'clue val') for named entity disambiguation  <br />
+This code is to evaluate input and output clustering for named entity disambiguation in Python 3. <br />
 <br />
-Clustering evaluation metrics for author name disambiguation <br/>
+Clustering evaluation metrics for named entity disambiguation <br/>
 
 (1) cluster-f: cluster-f precision/recall/f1 <br />
 (2) k-metric: k-metric precision/recall/f1 <br />
