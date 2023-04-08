@@ -17,6 +17,6 @@ Kim, J. (2019). A fast and integrative algorithm for clustering performance eval
 <br />    
 ## How to run files
 1. Download two files: 'CluEval.py' and 'metrics.py'. Make sure that they are located in the same directory. <br />
-2. Create a sub-folder named 'data' and put input files into it. You can use sample files provided in the data folder
+2. Create a sub-folder named 'data' and put input files into it. You can use sample files provided in the data folder. <br/>
 3. Run 'CluEval.py' file. <br />
 
