@@ -16,8 +16,12 @@ Kim, J. (2019). A fast and integrative algorithm for clustering performance eval
     in author name disambiguation. Scientometrics, 120(2), 661-681. 
 <br />    
 ## How to run files
-1. Download two files: 'CluEval.py' and 'metrics.py'. Make sure that they are located in the same directory. <br />
-2. Create a sub-folder named 'data' and put input files into it. You can use sample files provided in the data folder. <br/>
-3. Make sure that numpy and pandas are installed. The version we used for running the code: numpy (1.22.4) & pandas (1.4.4)
+1. The code was implemented on Python 3.9.16. To run the code, make sure that numpy and pandas are installed. The version we used: numpy (1.22.4) & pandas (1.4.4). You can install them using pip. Type the following command in the terminal or command prompt:
+
+pip install numpy==1.22.4  
+pip install pandas==1.4.4
+
+2. Download two files: 'CluEval.py' and 'metrics.py'. Make sure that they are located in the same directory. <br />
+3. Place your input files into the directory. You can use sample files provided in the data folder <br/> 
 4. Run 'CluEval.py' file. <br />
 
