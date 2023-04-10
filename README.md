@@ -4,15 +4,15 @@ This code is to evaluate clustering outputs for named entity disambiguation in P
 <br />
 Clustering evaluation metrics: <br/>
 
-(1) cluster-f: cluster-f precision/recall/f1 <br />
-(2) k-metric: k-metric precision/recall/f1 <br />
-(3) split-lump: splitting & lumping error precision/recall/f1 <br />
-(4) pairwise-f: paired precision/recall/f1 <br />
-(5) b-cubed: b3 precision/recall/f1 <br />
-(6) all: all types of clustering metric combined <br />
+(1) 'cluster-f': cluster-f precision/recall/f1 <br />
+(2) 'k-metric': k-metric precision/recall/f1 <br />
+(3) 'split-lump': splitting & lumping error precision/recall/f1 <br />
+(4) 'pairwise-f': paired precision/recall/f1 <br />
+(5) 'b-cubed': b3 precision/recall/f1 <br />
+(6) 'all': all types of clustering metric combined <br />
 <br />
-For more details on clustering evaluation metrics, see a paper below: <br />
-Kim, J. (2019). A fast and integrative algorithm for clustering performance evaluation
+For more information on clustering evaluation metrics, please refer to the paper below: <br />
+Kim, Jinseok. (2019). A fast and integrative algorithm for clustering performance evaluation
     in author name disambiguation. Scientometrics, 120(2), 661-681. 
 <br />    
 ## How to run files
@@ -25,3 +25,5 @@ Kim, J. (2019). A fast and integrative algorithm for clustering performance eval
 3. Place your input files into the directory. You can use sample files provided in the data folder <br/> 
 4. Run 'CluEval.py' file. <br />
 
+## Acknowledgements
+The development of CluEval received funding from the National Science Foundation (NSF NCSES Award #1917663).
