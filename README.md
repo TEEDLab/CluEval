@@ -4,6 +4,7 @@ This code is to evaluate clustering outputs for named entity disambiguation in P
 <br />
 
 If you use this tool in your research or tool development, please cite as follows:
+
 Kim, Jinseok and Kim, Jenna (2023). CluEval: A Python tool for evaluating clustering performance in named entity disambiguation. Software Impacts, Volume 16, 100510
 
 Here is the link to the full text of the paper (open-access)
