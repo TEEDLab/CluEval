@@ -2,6 +2,13 @@
 Clustering Evaluation (pronounced as 'clue val') for named entity disambiguation  <br />
 This code is to evaluate clustering outputs for named entity disambiguation in Python 3. <br />
 <br />
+
+If you use this tool in your research or tool development, please cite as follows:
+Kim, Jinseok and Kim, Jenna (2023). CluEval: A Python tool for evaluating clustering performance in named entity disambiguation. Software Impacts, Volume 16, 100510
+
+Here is the link to the full text of the paper (open-access)
+https://www.softwareimpacts.com/article/S2665-9638(23)00047-7/fulltext
+
 Clustering evaluation metrics: <br/>
 
 (1) 'cluster-f': cluster-f precision/recall/f1 <br />
