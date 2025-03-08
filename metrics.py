@@ -1,3 +1,5 @@
+# Updated: 03/07/2025
+
 """
 Clustering evaluation metrics for named entity disambiguation
 
@@ -11,7 +13,7 @@ Clustering evaluation metrics for named entity disambiguation
 For more details on clustering evaluation metrics, see a paper below
 Kim, J. (2019). A fast and integrative algorithm for clustering performance evaluation
     in author name disambiguation. Scientometrics, 120(2), 661-681. 
-	
+    
 """
 
 import time
@@ -20,111 +22,68 @@ import uuid
 import numpy as np
 import pandas as pd
 
-def cluster_eval(true_cluster, 
-                 pred_cluster, 
-                 clustering_metric = None, 
-                 enable_cluster_id = False, 
-                 cluster_id_namespace = "",
-                 enable_evlaution_file = False,
-                 evaluation_filename = None):
-     
-    ''' Calulate evaluation scores by the choice of clustering metric '''
+def cluster_eval(true_cluster, pred_cluster, clustering_metric=None, 
+                 enable_cluster_id=False, cluster_id_namespace="",
+                 enable_evaluation_file=False, evaluation_filename=None):
+    """
+    Calculate evaluation scores based on the chosen clustering metric.
+    """
 
-    if clustering_metric == "cluster-f":
-      score_list = clusterf_precision_recall_fscore(true_cluster, pred_cluster)
-      output_string = "Evaluation Scores: measured by '" + \
-                       clustering_metric + "'\n\nprecision|recall|f1-score"
-      scores = "{:.4f}|{:.4f}|{:.4f}".format(score_list[0], 
-                                             score_list[1], 
-                                             score_list[2])
-      print(output_string)
-      print(scores)
-    
-    elif clustering_metric == "k-metric":
-      score_list = kmetric_precision_recall_fscore(true_cluster, pred_cluster)
-      output_string = "Evaluation Scores: measured by '" + \
-                       clustering_metric + "'\n\nprecision|recall|f1-score"
-      scores = "{:.4f}|{:.4f}|{:.4f}".format(score_list[0], 
-                                             score_list[1], 
-                                             score_list[2])
-      print(output_string)
-      print(scores) 
-    
-    elif clustering_metric == "split-lump":
-      score_list = split_lump_error_precision_recall_fscore(true_cluster, pred_cluster)
-      output_string = "Evaluation Scores: measured by '" + \
-                       clustering_metric + "'\n\nprecision|recall|f1-score"
-      scores = "{:.4f}|{:.4f}|{:.4f}".format(score_list[0], 
-                                             score_list[1], 
-                                             score_list[2])
-      print(output_string)
-      print(scores)
+    # Define available metrics and corresponding functions
+    metrics_functions = {
+        "cluster-f": clusterf_precision_recall_fscore,
+        "k-metric": kmetric_precision_recall_fscore,
+        "split-lump": split_lump_error_precision_recall_fscore,
+        "pairwise-f": pairwisef_precision_recall_fscore,
+        "b-cubed": bcubed_precision_recall_fscore,
+        "all": all_metrics_precision_recall_fscore
+    }
 
-    elif clustering_metric == "pairwise-f":
-      score_list = pairwisef_precision_recall_fscore(true_cluster, pred_cluster)
-      output_string = "Evaluation Scores: measured by '" + \
-                       clustering_metric + "'\n\nprecision|recall|f1-score"
-      scores = "{:.4f}|{:.4f}|{:.4f}".format(score_list[0], 
-                                             score_list[1], 
-                                             score_list[2])
-      print(output_string)
-      print(scores)
+    if clustering_metric not in metrics_functions:
+        print("Error: Invalid clustering metric specified.")
+        return
 
-    elif clustering_metric == "b-cubed":
-      score_list = bcubed_precision_recall_fscore(true_cluster, pred_cluster)
-      output_string = "Evaluation Scores: measured by '" + \
-                       clustering_metric + "'\n\nprecision|recall|f1-score"
-      scores = "{:.4f}|{:.4f}|{:.4f}".format(score_list[0], 
-                                             score_list[1], 
-                                             score_list[2])
-      print(output_string)
-      print(scores)
+    # Compute scores
+    score_result = metrics_functions[clustering_metric](true_cluster, pred_cluster)
 
-    elif clustering_metric == "all":
-      scores = all_metrics_precision_recall_fscore(true_cluster, pred_cluster)
-      #string1 = "Evaluation Scores: measured by '" + clustering_metric + "'\n\n"
-      #string2 = "metricname \t {}|{}|{}".format("precision", "recall", "f1-score")
-      #output_string = string1 + string2
-
-      output_string = "Evaluation Scores: measured by '" + \
-                       clustering_metric + \
-                       "'\n\nmetricname \t precision|recall|f1-score"
-                       
-      print(output_string)
-      print(scores)
-
+    # Prepare the output string
+    if clustering_metric == "all":
+        output_string = f"Evaluation Scores (all metrics):\n\n{score_result}"
     else:
-      print("Please provide the name of clustering metric you choose")
-    
-    ''' Create a file containing evaluation scores '''
+        precision, recall, f_score = score_result
+        output_string = (
+            f"Evaluation Scores measured by '{clustering_metric}':\n\n"
+            f"precision | recall | f1-score\n"
+            f"{precision:.4f} | {recall:.4f} | {f_score:.4f}"
+        )
 
-    if enable_evlaution_file:
+    print(output_string)
+
+    # Write evaluation scores to a file, if enabled
+    if enable_evaluation_file and evaluation_filename:
         with open(evaluation_filename, 'w') as eval_file:
-            eval_file.write(output_string + "\n" + scores)                
+            eval_file.write(output_string)
 
-
-    ''' Create an output file containing predicted clusters '''
-
-    clustering_filename = "_".join(['clustering_results', clustering_metric]) + '.txt'
+    # Generate clustering results file
+    clustering_filename = f"clustering_results_{clustering_metric}.txt"
     with open(clustering_filename, 'w') as output_file:
-        if enable_cluster_id:
-            # Generate UUID for each cluster in the cluster list
-            for index, line in enumerate(pred_cluster):
-                instance_ids = "|".join(str(e) for e in line)              
-                name = clustering_metric + '_' + str(index)
-                uuid_obj = uuid.uuid5(cluster_id_namespace, name)
-                output_file.write(str(uuid_obj) + "\t" + instance_ids + "\n")                   
+        if enable_cluster_id and cluster_id_namespace:
+            for index, cluster in enumerate(pred_cluster):
+                instance_ids = "|".join(str(instance) for instance in cluster)
+                cluster_uuid = uuid.uuid5(cluster_id_namespace, f"{clustering_metric}_{index}")
+                output_file.write(f"{cluster_uuid}\t{instance_ids}\n")
         else:
-            # If enable_cluster_id is False, simply write cluster_list to output_file
-            for line in pred_cluster:
-                instance_ids = "|".join(str(e) for e in line) 
+            for cluster in pred_cluster:
+                instance_ids = "|".join(str(instance) for instance in cluster)
                 output_file.write(instance_ids + "\n")
 
-    print("\n" + clustering_filename + " created\n")
+    print(f"\n{clustering_filename} created\n")
+
      
 
 def file_converter(filename):
-    """Read in input file and load data
+    """
+    Read in an input file and load data
     
     :param filename: text file with clustering id and instance lists
     :return: list of clusters containing integer instance ids
@@ -135,30 +94,30 @@ def file_converter(filename):
   
     # parse cluster lists 
     # assumes that clusters of instances are located in the last column
-    df.iloc[:, -1] = df.iloc[:, -1].apply(lambda x: [int(instance) for instance in x.strip().split("|")])
-    clusters_list = df.iloc[:, -1].tolist()
-    
-    return clusters_list
+    df = pd.read_csv(filename, sep="\t", encoding='utf-8', header=None)
+    clusters_list = df.iloc[:, -1].apply(lambda x: [int(instance) for instance in x.strip().split("|")])
+    return clusters_list.tolist()
+
+
+def compute_fscore(precision, recall):
+    """
+    Compute F-score safely, handling division by zero.
+    """
+    if precision + recall == 0:
+        return 0.0
+    return (2 * precision * recall) / (precision + recall)
 
 
 def clusterf_precision_recall_fscore(labels_true, labels_pred):
-    """Compute the cluster-f of precision, recall and F-score.
+    """
+    Compute the cluster-f of precision, recall and F-score.
     
-    Parameters
-    ----------
-    :param labels_true: list containing the ground truth cluster labels.
-    :param labels_pred: list containing the predicted cluster labels.
+    Parameters:
+        labels_true (list): True clusters as a list of lists of instance IDs.
+        labels_pred (list): Predicted clusters as a list of lists of instance IDs.
 
-    Returns
-    -------
-    :return float precision: calculated precision
-    :return float recall: calculated recall
-    :return float f_score: calculated f_score
-    
-    Reference
-    ---------
-    Kim, J. (2019). A fast and integrative algorithm for clustering performance evaluation
-    in author name disambiguation. Scientometrics, 120(2), 661-681.
+    Returns:
+        str: Formatted string with precision, recall, and F-score for all metrics.
     """
     
     truth = labels_true
@@ -168,7 +127,7 @@ def clusterf_precision_recall_fscore(labels_true, labels_pred):
     cMatch = 0
 
     pIndex = {}
-	
+    
     for i, pred_i in zip(range(len(predicted)),predicted):
         for p in pred_i:
             pIndex[p] = i + 1
@@ -187,35 +146,23 @@ def clusterf_precision_recall_fscore(labels_true, labels_pred):
             if value == len(true_j) and cSize[key] == len(true_j):
                 cMatch += 1   
             
-    recall = cMatch/len(truth)
     precision = cMatch/len(predicted)
-
-    try:
-        f_score = 2*recall*precision/(recall + precision)
-    except ZeroDivisionError:
-        f_score = 1.0	
+    recall = cMatch/len(truth)
+    f_score = compute_fscore(precision, recall)        
 
     return (precision, recall, f_score)
 
 
 def kmetric_precision_recall_fscore(labels_true, labels_pred):
-    """Compute the k-metric of precision, recall and F-score.
+    """
+    Compute the k-metric of precision, recall and F-score.
     
-    Parameters
-    ----------
-    :param labels_true: list containing the ground truth cluster labels.
-    :param labels_pred: list containing the predicted cluster labels.
+    Parameters:
+        labels_true (list): True clusters as a list of lists of instance IDs.
+        labels_pred (list): Predicted clusters as a list of lists of instance IDs.
 
-    Returns
-    -------
-    :return float precision: calculated precision
-    :return float recall: calculated recall
-    :return float f_score: calculated f_score
-    
-    Reference
-    ---------
-    Kim, J. (2019). A fast and integrative algorithm for clustering performance evaluation
-    in author name disambiguation. Scientometrics, 120(2), 661-681.
+    Returns:
+        str: Formatted string with precision, recall, and F-score for all metrics.
     """
     
     truth = labels_true
@@ -226,12 +173,12 @@ def kmetric_precision_recall_fscore(labels_true, labels_pred):
     aapSum = 0 
     acpSum = 0
     pIndex = {}
-	
+    
     for i, pred_i in zip(range(len(predicted)),predicted):
         for p in pred_i:
             pIndex[p] = i + 1
         cSize[i + 1] = len(pred_i)       
-	
+    
     instSum = 0
     for true_j in truth:
         instSum += len(true_j)
@@ -247,36 +194,28 @@ def kmetric_precision_recall_fscore(labels_true, labels_pred):
                 cMatch += 1   
             aapSum += pow(value,2)/len(true_j)
             acpSum += pow(value,2)/cSize[key]
-	
-    recall = aapSum/instSum
+    
     precision = acpSum/instSum
+    recall = aapSum/instSum
 
     try:
         f_score = math.sqrt(recall*precision)
     except ZeroDivisionError:
-        f_score = 1.0	
+        f_score = 1.0
 
     return (precision, recall, f_score)
 
 
 def split_lump_error_precision_recall_fscore(labels_true, labels_pred):
-    """Compute the splitting & lumping error with precision, recall and F-score.
+    """
+    Compute the splitting & lumping error with precision, recall and F-score.
     
-    Parameters
-    ----------
-    :param labels_true: list containing the ground truth cluster labels.
-    :param labels_pred: list containing the predicted cluster labels.
+    Parameters:
+        labels_true (list): True clusters as a list of lists of instance IDs.
+        labels_pred (list): Predicted clusters as a list of lists of instance IDs.
 
-    Returns
-    -------
-    :return float precision: calculated precision
-    :return float recall: calculated recall
-    :return float f_score: calculated f_score
-    
-    Reference
-    ---------
-    Kim, J. (2019). A fast and integrative algorithm for clustering performance evaluation
-    in author name disambiguation. Scientometrics, 120(2), 661-681.
+    Returns:
+        str: Formatted string with precision, recall, and F-score for all metrics.
     """
     
     truth = labels_true
@@ -288,13 +227,13 @@ def split_lump_error_precision_recall_fscore(labels_true, labels_pred):
     instTrSum = 0
     instPrSum = 0
     pIndex = {}
-	
+    
     for i, pred_i in zip(range(len(predicted)),predicted):
         for p in pred_i:
             pIndex[p] = i + 1
 
         cSize[i + 1] = len(pred_i)         # hash of a cluster P_i and its size
-		
+        
     for true_j in truth:
         tMap = {}
         maxKey = 0
@@ -313,39 +252,27 @@ def split_lump_error_precision_recall_fscore(labels_true, labels_pred):
             instPrSum += cSize[maxKey] 
             spSum += (len(true_j) - maxValue)  
             lmSum += (cSize[maxKey] - maxValue) 
-	
-    SE = spSum/instTrSum
+    
     LE = lmSum/instPrSum
-  
-    recall = 1 - SE
-    precision = 1 - LE
+    SE = spSum/instTrSum
 
-    try:
-        f_score = (2*recall*precision)/(recall + precision)
-    except ZeroDivisionError:
-        f_score = 1.0
+    precision = 1 - LE
+    recall = 1 - SE
+    f_score = compute_fscore(precision, recall)
 
     return (precision, recall, f_score)
 
 
 def pairwisef_precision_recall_fscore(labels_true, labels_pred):
-    """Compute the pairwise-f of precision, recall and F-score.
+    """
+    Compute the pairwise-f of precision, recall and F-score.
     
-    Parameters
-    ----------
-    :param labels_true: list containing the ground truth cluster labels.
-    :param labels_pred: list containing the predicted cluster labels.
+    Parameters:
+        labels_true (list): True clusters as a list of lists of instance IDs.
+        labels_pred (list): Predicted clusters as a list of lists of instance IDs.
 
-    Returns
-    -------
-    :return float precision: calculated precision
-    :return float recall: calculated recall
-    :return float f_score: calculated f_score
-    
-    Reference
-    ---------
-    Kim, J. (2019). A fast and integrative algorithm for clustering performance evaluation
-    in author name disambiguation. Scientometrics, 120(2), 661-681.
+    Returns:
+        str: Formatted string with precision, recall, and F-score for all metrics.
     """
     
     truth = labels_true
@@ -355,12 +282,12 @@ def pairwisef_precision_recall_fscore(labels_true, labels_pred):
     pairTrSum = 0
     pairIntSum = 0
     pIndex = {}
-	  
+      
     for i, pred_i in zip(range(len(predicted)),predicted):
         for p in pred_i:
             pIndex[p] = i + 1
         pairPrSum += len(pred_i)*(len(pred_i) - 1)/2
-		
+        
 
     for true_j in truth:
         pairTrSum += len(true_j)*(len(true_j) - 1)/2
@@ -374,43 +301,31 @@ def pairwisef_precision_recall_fscore(labels_true, labels_pred):
         for key, value in sorted(tMap.items(), key = lambda kv: kv[0]):
             pairIntSum += value*(value - 1)/2
             
-	
-    try:
-        recall = pairIntSum/pairTrSum
-    except ZeroDivisionError:
-        recall = 1.0
-    
     try:
         precision = pairIntSum/pairPrSum
     except ZeroDivisionError:
         precision = 1.0
-
+        
     try:
-        f_score = (2*recall*precision)/(recall+precision)
+        recall = pairIntSum/pairTrSum
     except ZeroDivisionError:
-        f_score = 1.0
+        recall = 1.0
+
+    f_score = compute_fscore(precision, recall)
 
     return (precision, recall, f_score)
 
 
 def bcubed_precision_recall_fscore(labels_true, labels_pred):
-    """Compute the b-cubed metric of precision, recall and F-score.
+    """
+    Compute the b-cubed metric of precision, recall and F-score.
     
-    Parameters
-    ----------
-    :param labels_true: list containing the ground truth cluster labels.
-    :param labels_pred: list containing the predicted cluster labels.
+    Parameters:
+        labels_true (list): True clusters as a list of lists of instance IDs.
+        labels_pred (list): Predicted clusters as a list of lists of instance IDs.
 
-    Returns
-    -------
-    :return float precision: calculated precision
-    :return float recall: calculated recall
-    :return float f_score: calculated f_score
-    
-    Reference
-    ---------
-    Kim, J. (2019). A fast and integrative algorithm for clustering performance evaluation
-    in author name disambiguation. Scientometrics, 120(2), 661-681.
+    Returns:
+        str: Formatted string with precision, recall, and F-score for all metrics.
     """
     
     truth = labels_true
@@ -421,14 +336,14 @@ def bcubed_precision_recall_fscore(labels_true, labels_pred):
     aapSum = 0 
     acpSum = 0
     pIndex = {}
-	
+    
     for i, pred_i in zip(range(len(predicted)),predicted):
         for p in pred_i:
             pIndex[p] = i + 1
 
         cSize[i + 1] = len(pred_i) # hash of a cluster P_i and its size
-		
-    instSum = 0	
+        
+    instSum = 0 
     for true_j in truth:
         instSum += len(true_j)
         tMap = {}
@@ -443,38 +358,27 @@ def bcubed_precision_recall_fscore(labels_true, labels_pred):
                 cMatch += 1     
             aapSum += pow(value,2)/len(true_j)
             acpSum += pow(value,2)/cSize[key]
-	
-    recall = aapSum/instSum
+    
     precision = acpSum/instSum
-  
-    try:
-        f_score = 2*recall*precision/(recall + precision)
-    except ZeroDivisionError:
-        f_score = 1.0
+    recall = aapSum/instSum
+    f_score = compute_fscore(precision, recall)
 
     return (precision, recall, f_score)
-	
+    
 
 def all_metrics_precision_recall_fscore(labels_true, labels_pred):
-    """An integrative algorithm for clustering performance evaluation 
-    in author name disambiguation
     
-	  Parameters
-    ----------
-    :param labels_true: list containing the ground truth cluster labels.
-    :param labels_pred: list containing the predicted cluster labels.
+    """
+    Compute all clustering evaluation metrics: 
+    Cluster-F, K-Metric, Split-Lump, Pairwise-F, and B-Cubed.
 
-    Returns
-    -------
-    :return float precision: calculated precision
-    :return float recall: calculated recall
-    :return float f_score: calculated f_score
     
-    Reference
-    ---------
-    Kim, J. (2019). A fast and integrative algorithm for clustering performance evaluation
-    in author name disambiguation. Scientometrics, 120(2), 661-681. 
+    Parameters:
+        labels_true (list): True clusters as a list of lists of instance IDs.
+        labels_pred (list): Predicted clusters as a list of lists of instance IDs.
 
+    Returns:
+        str: Formatted string with precision, recall, and F-score for all metrics.
     """
     
     ## load data
@@ -494,14 +398,14 @@ def all_metrics_precision_recall_fscore(labels_true, labels_pred):
     pairTrSum = 0
     pairIntSum = 0
     pIndex = {}
-	
+    
     for i, pred_i in zip(range(len(predicted)),predicted):
         for p in pred_i:
             pIndex[p] = i + 1
 
         cSize[i + 1] = len(pred_i)        # hash of a cluster P_i and its size
         pairPrSum += len(pred_i)*(len(pred_i) - 1)/2
-		
+        
     instSum = 0
     for true_j in truth:
         instSum += len(true_j)
@@ -528,21 +432,16 @@ def all_metrics_precision_recall_fscore(labels_true, labels_pred):
             instPrSum += cSize[maxKey]    # sum of instances in the largest predicted clusters for a unique author
             spSum += (len(true_j) - maxValue)   # sum of split instances
             lmSum += (cSize[maxKey] - maxValue) # sum of lumped instances
-	
+    
 
-	  ## measure clustering performance
+    ## measure clustering performance
     # cluster-f
-    rec_clusterf = cMatch/len(truth)
     pre_clusterf = cMatch/len(predicted)
+    rec_clusterf = cMatch/len(truth)
+    f_clusterf = compute_fscore(pre_clusterf, rec_clusterf)
+        
 
-    try:
-        f_clusterf = 2*rec_clusterf*pre_clusterf/(rec_clusterf + pre_clusterf)
-    except ZeroDivisionError:
-        f_clusterf = 1.0	
-
-    scores_clusterf = "cluster-f \t {:.4f}|{:.4f}|{:.4f}".format(pre_clusterf, 
-                                                               rec_clusterf, 
-                                                               f_clusterf)
+    scores_clusterf = "cluster-f \t {:.4f}|{:.4f}|{:.4f}".format(pre_clusterf, rec_clusterf, f_clusterf)
 
     # k-metric
     rec_kmetric = aapSum/instSum
@@ -551,60 +450,40 @@ def all_metrics_precision_recall_fscore(labels_true, labels_pred):
     try:
         f_kmetric = math.sqrt(rec_kmetric*pre_kmetric)
     except ZeroDivisionError:
-        f_kmetric = 1.0			
+        f_kmetric = 1.0         
     
-    scores_kmetric = "k-metric \t {:.4f}|{:.4f}|{:.4f}".format(pre_kmetric, 
-                                                             rec_kmetric, 
-                                                             f_kmetric)
+    scores_kmetric = "k-metric \t {:.4f}|{:.4f}|{:.4f}".format(pre_kmetric, rec_kmetric, f_kmetric)
 
     # splitting & Lumping Error
-    se = spSum/instTrSum
     le = lmSum/instPrSum
-  
+    se = spSum/instTrSum
+    pre_sl = 1 - le
     rec_sl = 1 - se
-    prec_sl = 1 - le
-
-    try:
-        f_sl = (2*rec_sl*prec_sl)/(rec_sl + prec_sl)
-    except ZeroDivisionError:
-        f_sl = 1.0
+    f_sl = compute_fscore(pre_sl, rec_sl)
     
-    scores_sl = "SE & LE \t {:.4f}|{:.4f}|{:.4f}".format(prec_sl, 
-                                                                   rec_sl, 
-                                                                   f_sl)
+    scores_sl = "SE & LE \t {:.4f}|{:.4f}|{:.4f}".format(pre_sl, rec_sl, f_sl)
 
     # pairwise-F
-    try:
-        rec_pairwisef = pairIntSum/pairTrSum
-    except ZeroDivisionError:
-        rec_pairwisef = 1.0
-    
     try:
         pre_pairwisef = pairIntSum/pairPrSum
     except ZeroDivisionError:
         pre_pairwisef = 1.0
 
     try:
-        f_pairwisef = (2*rec_pairwisef*pre_pairwisef)/(rec_pairwisef+pre_pairwisef)
+        rec_pairwisef = pairIntSum/pairTrSum
     except ZeroDivisionError:
-        f_pairwisef = 1.0
+        rec_pairwisef = 1.0
+
+    f_pairwisef = compute_fscore(pre_pairwisef, rec_pairwisef)
     
-    scores_pairwisef = "pairwise-f \t {:.4f}|{:.4f}|{:.4f}".format(pre_pairwisef, 
-                                                                 rec_pairwisef, 
-                                                                 f_pairwisef)
+    scores_pairwisef = "pairwise-f \t {:.4f}|{:.4f}|{:.4f}".format(pre_pairwisef, rec_pairwisef, f_pairwisef)
 
     # b-cubed
-    rec_bcubed = aapSum/instSum
     pre_bcubed = acpSum/instSum
-  
-    try:
-        f_bcubed = 2*rec_bcubed*pre_bcubed/(rec_bcubed + pre_bcubed)
-    except ZeroDivisionError:
-        f_bcubed = 1.0
+    rec_bcubed = aapSum/instSum
+    f_bcubed = compute_fscore(pre_bcubed, rec_bcubed)
     
-    scores_bcubed = "b-cubed \t {:.4f}|{:.4f}|{:.4f}".format(pre_bcubed, 
-                                                           rec_bcubed, 
-                                                           f_bcubed)
+    scores_bcubed = "b-cubed \t {:.4f}|{:.4f}|{:.4f}".format(pre_bcubed, rec_bcubed, f_bcubed)
 
     output = scores_clusterf + "\n" \
              + scores_kmetric + "\n" \
@@ -612,5 +491,5 @@ def all_metrics_precision_recall_fscore(labels_true, labels_pred):
              + scores_pairwisef + "\n" \
              + scores_bcubed
 
-    return output		
+    return output       
 ### The end of line ###
